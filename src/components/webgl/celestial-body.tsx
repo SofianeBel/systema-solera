@@ -125,32 +125,6 @@ function createSolarCoronaTexture(): THREE.Texture {
     context.stroke();
   }
 
-  const drawProminence = (startAngle: number, peakAngle: number, endAngle: number, radius: number, reach: number, width: number) => {
-    const start = { x: center + Math.cos(startAngle) * radius, y: center + Math.sin(startAngle) * radius };
-    const peak = { x: center + Math.cos(peakAngle) * reach, y: center + Math.sin(peakAngle) * reach };
-    const end = { x: center + Math.cos(endAngle) * radius, y: center + Math.sin(endAngle) * radius };
-
-    context.shadowColor = "rgba(255, 64, 20, 0.42)";
-    context.shadowBlur = 10;
-    context.strokeStyle = "rgba(255, 68, 20, 0.3)";
-    context.lineWidth = width;
-    context.beginPath();
-    context.moveTo(start.x, start.y);
-    context.quadraticCurveTo(peak.x, peak.y, end.x, end.y);
-    context.stroke();
-
-    context.shadowBlur = 4;
-    context.strokeStyle = "rgba(255, 194, 88, 0.32)";
-    context.lineWidth = Math.max(1, width * 0.42);
-    context.beginPath();
-    context.moveTo(start.x, start.y);
-    context.quadraticCurveTo(peak.x, peak.y, end.x, end.y);
-    context.stroke();
-  };
-
-  drawProminence(-0.84, -0.62, -0.4, center * 0.43, center * 0.65, 5.4);
-  drawProminence(2.34, 2.18, 2.02, center * 0.43, center * 0.57, 3.6);
-  drawProminence(1.24, 1.16, 1.1, center * 0.44, center * 0.68, 2.4);
   context.restore();
 
   const texture = new THREE.CanvasTexture(canvas);
