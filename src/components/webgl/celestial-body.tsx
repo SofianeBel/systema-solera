@@ -80,10 +80,6 @@ function createTransparentTexture(): THREE.Texture {
   return texture;
 }
 
-function pseudoRandom(index: number): number {
-  return Math.sin(index * 12.9898) * 43758.5453 % 1;
-}
-
 function createSolarCoronaTexture(): THREE.Texture {
   if (typeof document === "undefined") {
     return createTransparentTexture();
@@ -105,27 +101,6 @@ function createSolarCoronaTexture(): THREE.Texture {
   halo.addColorStop(1, "rgba(255, 238, 184, 0)");
   context.fillStyle = halo;
   context.fillRect(0, 0, SOLAR_CORONA_TEXTURE_SIZE, SOLAR_CORONA_TEXTURE_SIZE);
-
-  context.save();
-  context.globalCompositeOperation = "lighter";
-  context.lineCap = "round";
-  for (let index = 0; index < 28; index += 1) {
-    const jitter = Math.abs(pseudoRandom(index));
-    const angle = (index / 28) * Math.PI * 2 + (jitter - 0.5) * 0.34;
-    const inner = center * (0.42 + jitter * 0.08);
-    const outer = center * (0.62 + Math.abs(pseudoRandom(index + 11)) * 0.32);
-    const alpha = 0.018 + Math.abs(pseudoRandom(index + 23)) * 0.042;
-    context.strokeStyle = `rgba(255, 224, 168, ${alpha})`;
-    context.lineWidth = 1 + jitter * 2.2;
-    context.shadowColor = "rgba(255, 130, 38, 0.16)";
-    context.shadowBlur = 12;
-    context.beginPath();
-    context.moveTo(center + Math.cos(angle) * inner, center + Math.sin(angle) * inner);
-    context.lineTo(center + Math.cos(angle) * outer, center + Math.sin(angle) * outer);
-    context.stroke();
-  }
-
-  context.restore();
 
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
