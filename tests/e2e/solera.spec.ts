@@ -77,6 +77,7 @@ test("cards open into an immersive scene and return with Escape and browser Back
   await expect(page.getByRole("button", { name: "Enter Sol immersive scene" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Enter Terra immersive scene" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Enter Luna immersive scene" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open SofianeBel on GitHub" })).toHaveAttribute("href", "https://github.com/SofianeBel");
   await expect(page.getByText("Systema Solera is not affiliated with OpenAI.")).toBeVisible();
   await expect(page.getByText("Flagship model for ambitious agentic work")).toBeVisible();
   await expect(page.getByText("$5.00")).toBeVisible();
@@ -87,6 +88,7 @@ test("cards open into an immersive scene and return with Escape and browser Back
   await expect(page.getByRole("button", { name: "Return to model grid" })).toBeFocused();
   await expect(page.getByRole("region", { name: "Terra immersive scene" })).toBeVisible();
   await expect(page.locator(".scene-view canvas")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pause camera orbit" })).toHaveAttribute("aria-pressed", "false");
   await expect(page.getByRole("button", { name: "Expand Terra scene details, Input $2.50" })).toBeVisible();
   await expect(page.getByText("Drag to orbit")).toBeHidden();
 
@@ -135,6 +137,25 @@ test("cards open into an immersive scene and return with Escape and browser Back
   await expect(page.getByRole("region", { name: "Terra immersive scene" })).toBeVisible();
   await page.getByRole("button", { name: "Expand Terra scene details, Input $2.50" }).click();
   await expect(page.getByText("Clouds and night lights")).toBeVisible();
+});
+
+test("camera rotation toggle pauses camera orbit without freezing scene motion", async ({ page }) => {
+  await page.goto("/#terra");
+
+  await expect(page.getByRole("region", { name: "Terra immersive scene" })).toBeVisible();
+  await expect(page.locator(".scene-view canvas")).toBeVisible();
+
+  await page.getByRole("button", { name: "Pause camera orbit" }).click();
+  await expect(page.getByRole("button", { name: "Resume camera orbit" })).toHaveAttribute("aria-pressed", "true");
+  await page.waitForTimeout(500);
+
+  const before = await page.locator(".scene-view").screenshot();
+  await page.waitForTimeout(1200);
+  const after = await page.locator(".scene-view").screenshot();
+  const diff = await compareSceneScreenshots(page, before, after, { xEnd: 900 });
+
+  expect(diff.avgRgbDiff).toBeGreaterThan(0.2);
+  expect(diff.changedRatio).toBeGreaterThan(0.002);
 });
 
 test("debug controls expose live scene tuning and reset to defaults", async ({ page }) => {

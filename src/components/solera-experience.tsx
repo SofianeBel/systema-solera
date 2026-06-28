@@ -38,12 +38,13 @@ function modelIdFromLocationHash(): ModelId | null {
 
 export function SoleraExperience({ models }: SoleraExperienceProps) {
   const [state, setState] = useState<SceneState>({ status: "grid" });
+  const [cameraAutoRotatePaused, setCameraAutoRotatePaused] = useState(false);
   const [scenePanelExpanded, setScenePanelExpanded] = useState(false);
   const [profile, setProfile] = useState<RenderingProfile>(() =>
     resolveRenderingProfile({ width: 1280, devicePixelRatio: 1, supportsWebGL: false, prefersReducedMotion: true, sceneVisible: true }),
   );
   const [debugSettings, setDebugSettings] = useState<DebugSettings>(DEFAULT_DEBUG_SETTINGS);
-  const buttonRefs = useRef(new Map<ModelId, HTMLButtonElement>());
+  const buttonRefs = useRef(new Map<ModelId, HTMLAnchorElement>());
   const backButtonRef = useRef<HTMLButtonElement>(null);
   const originModelRef = useRef<ModelId | null>(null);
   const currentModelId = selectedModelId(state);
@@ -86,6 +87,7 @@ export function SoleraExperience({ models }: SoleraExperienceProps) {
   }, []);
 
   const closeSelectedScene = useCallback(() => {
+    setCameraAutoRotatePaused(false);
     setScenePanelExpanded(false);
     setState(closeScene());
     if (window.location.hash) {
@@ -96,6 +98,7 @@ export function SoleraExperience({ models }: SoleraExperienceProps) {
 
   const openSelectedScene = useCallback((modelId: ModelId) => {
     originModelRef.current = modelId;
+    setCameraAutoRotatePaused(false);
     setScenePanelExpanded(false);
     setState(openScene(modelId));
     window.history.pushState({ selectedModelId: modelId }, "", `#${modelId}`);
@@ -106,10 +109,12 @@ export function SoleraExperience({ models }: SoleraExperienceProps) {
       const hashModelId = modelIdFromLocationHash();
       if (hashModelId) {
         originModelRef.current = hashModelId;
+        setCameraAutoRotatePaused(false);
         setScenePanelExpanded(false);
         setState(openScene(hashModelId));
         return;
       }
+      setCameraAutoRotatePaused(false);
       setScenePanelExpanded(false);
       setState(closeScene());
       if (shouldRestoreFocus) {
@@ -137,11 +142,15 @@ export function SoleraExperience({ models }: SoleraExperienceProps) {
 
   useEffect(() => {
     syncSceneFromLocation(false);
-    const handlePopState = () => {
+    const handleLocationChange = () => {
       syncSceneFromLocation(true);
     };
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
+    window.addEventListener("hashchange", handleLocationChange);
+    window.addEventListener("popstate", handleLocationChange);
+    return () => {
+      window.removeEventListener("hashchange", handleLocationChange);
+      window.removeEventListener("popstate", handleLocationChange);
+    };
   }, [syncSceneFromLocation]);
 
   const selectedModel = useMemo(() => (currentModelId ? getModelById(currentModelId) : null), [currentModelId]);
@@ -156,11 +165,17 @@ export function SoleraExperience({ models }: SoleraExperienceProps) {
           <p className="header-dek">A model system with gravity.</p>
           <div className="system-label">Sol / Terra / Luna</div>
         </header>
+        <a className="github-link" href="https://github.com/SofianeBel" target="_blank" rel="noopener noreferrer" aria-label="Open SofianeBel on GitHub">
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M12 .5C5.65.5.5 5.78.5 12.29c0 5.2 3.29 9.61 7.86 11.17.57.11.78-.26.78-.57 0-.28-.01-1.02-.02-2-3.2.71-3.87-1.58-3.87-1.58-.52-1.36-1.28-1.72-1.28-1.72-1.05-.73.08-.72.08-.72 1.15.08 1.76 1.22 1.76 1.22 1.03 1.8 2.7 1.28 3.35.98.1-.76.4-1.28.73-1.57-2.55-.3-5.23-1.31-5.23-5.82 0-1.29.45-2.34 1.18-3.16-.12-.3-.51-1.5.11-3.12 0 0 .97-.32 3.16 1.21.92-.26 1.9-.39 2.88-.39.98.01 1.96.14 2.88.39 2.2-1.53 3.16-1.21 3.16-1.21.62 1.62.23 2.82.11 3.12.73.82 1.18 1.87 1.18 3.16 0 4.52-2.69 5.52-5.25 5.81.41.37.78 1.09.78 2.2 0 1.59-.01 2.87-.01 3.26 0 .32.2.69.79.57 4.56-1.56 7.85-5.97 7.85-11.17C23.5 5.78 18.35.5 12 .5Z" />
+          </svg>
+        </a>
         <div className="model-grid" aria-label="Systema Solera model catalog">
           {models.map((model) => (
-            <button
+            <a
               className="model-card"
               data-model={model.id}
+              href={`#${model.id}`}
               key={model.id}
               ref={(node) => {
                 if (node) {
@@ -169,8 +184,11 @@ export function SoleraExperience({ models }: SoleraExperienceProps) {
                   buttonRefs.current.delete(model.id);
                 }
               }}
-              type="button"
-              onClick={() => openSelectedScene(model.id)}
+              role="button"
+              onClick={(event) => {
+                event.preventDefault();
+                openSelectedScene(model.id);
+              }}
               aria-label={`Enter ${model.name} immersive scene`}
             >
               <div className="preview-layer" aria-hidden="true">
@@ -193,18 +211,38 @@ export function SoleraExperience({ models }: SoleraExperienceProps) {
                   ))}
                 </div>
               </div>
-            </button>
+            </a>
           ))}
         </div>
         <p className="home-disclaimer">Systema Solera is not affiliated with OpenAI.</p>
       </section>
       {selectedModel && selectedMetric ? (
         <section className="scene-view" data-model={selectedModel.id} aria-label={`${selectedModel.name} immersive scene`}>
-          <button className="scene-back" ref={backButtonRef} type="button" onClick={closeSelectedScene}>
-            Return to model grid
-          </button>
+          <div className="scene-controls">
+            <button className="scene-back" ref={backButtonRef} type="button" onClick={closeSelectedScene}>
+              Return to model grid
+            </button>
+            <button
+              aria-label={cameraAutoRotatePaused ? "Resume camera orbit" : "Pause camera orbit"}
+              aria-pressed={cameraAutoRotatePaused}
+              className="camera-rotation-toggle"
+              title={cameraAutoRotatePaused ? "Resume camera orbit" : "Pause camera orbit"}
+              type="button"
+              onClick={() => setCameraAutoRotatePaused((paused) => !paused)}
+            >
+              {cameraAutoRotatePaused ? (
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                  <path d="M8 5.6v12.8l10-6.4-10-6.4Z" />
+                </svg>
+              ) : (
+                <svg aria-hidden="true" viewBox="0 0 24 24">
+                  <path d="M7 5h3.6v14H7V5Zm6.4 0H17v14h-3.6V5Z" />
+                </svg>
+              )}
+            </button>
+          </div>
           {profile.mode !== "css" ? (
-            <ImmersiveCanvas debugSettings={debugSettings} modelId={selectedModel.id} profile={profile} />
+            <ImmersiveCanvas cameraAutoRotatePaused={cameraAutoRotatePaused} debugSettings={debugSettings} modelId={selectedModel.id} profile={profile} />
           ) : (
             <div className="orb-fallback" aria-hidden="true" />
           )}

@@ -15,6 +15,7 @@ import { configureRenderer, rendererSettings } from "./renderer-settings";
 import { Starfield } from "./starfield";
 
 type ImmersiveCanvasProps = Readonly<{
+  cameraAutoRotatePaused: boolean;
   debugSettings: DebugSettings;
   modelId: ModelId;
   profile: RenderingProfile;
@@ -24,6 +25,7 @@ const SPACE_DEEP_RGB: [number, number, number] = [0.003, 0.003, 0.003];
 
 function CameraRig({
   cameraOffset,
+  cameraAutoRotatePaused,
   debugSettings,
   maxDistance,
   minDistance,
@@ -31,6 +33,7 @@ function CameraRig({
   target,
 }: Readonly<{
   cameraOffset: THREE.Vector3;
+  cameraAutoRotatePaused: boolean;
   debugSettings: DebugSettings;
   maxDistance: number;
   minDistance: number;
@@ -78,7 +81,7 @@ function CameraRig({
   useFrame(() => {
     const controls = controlsRef.current;
     if (controls) {
-      controls.autoRotate = profile.animated;
+      controls.autoRotate = profile.animated && !cameraAutoRotatePaused;
       controls.autoRotateSpeed = debugSettings.cameraAutoRotateSpeed * debugSettings.motionScale;
       controls.update();
     }
@@ -86,7 +89,7 @@ function CameraRig({
   return null;
 }
 
-export default function ImmersiveCanvas({ debugSettings, modelId, profile }: ImmersiveCanvasProps) {
+export default function ImmersiveCanvas({ cameraAutoRotatePaused, debugSettings, modelId, profile }: ImmersiveCanvasProps) {
   const selectedMetric = getCelestialMetric(modelId);
   const cameraComposition = useMemo(() => selectedCameraComposition(modelId, profile.compact), [modelId, profile.compact]);
   const cameraOffset = useMemo(() => new THREE.Vector3(...cameraComposition.offset), [cameraComposition]);
@@ -108,6 +111,7 @@ export default function ImmersiveCanvas({ debugSettings, modelId, profile }: Imm
       <Starfield debugSettings={debugSettings} profile={profile} />
       <CameraRig
         cameraOffset={cameraOffset}
+        cameraAutoRotatePaused={cameraAutoRotatePaused}
         debugSettings={debugSettings}
         maxDistance={cameraComposition.maxDistance}
         minDistance={cameraComposition.minDistance}

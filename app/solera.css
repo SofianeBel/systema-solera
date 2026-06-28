@@ -112,10 +112,12 @@
 
 .model-card {
   position: relative;
+  display: block;
   min-height: min(84dvh, 808px);
   padding: var(--space-6);
   overflow: hidden;
   color: var(--color-spectral);
+  text-decoration: none;
   text-align: left;
   cursor: pointer;
   background: var(--color-space-deep);
@@ -134,9 +136,39 @@
 
 .model-card:focus-visible,
 .scene-back:focus-visible,
-.scene-card-summary:focus-visible {
+.camera-rotation-toggle:focus-visible,
+.scene-card-summary:focus-visible,
+.github-link:focus-visible {
   outline: 0;
   box-shadow: 0 0 0 2px var(--color-focus);
+}
+
+.github-link {
+  position: fixed;
+  top: var(--space-4);
+  right: calc(var(--space-4) + 88px);
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--color-spectral);
+  background: color-mix(in oklch, var(--color-space), transparent 8%);
+  border: 1px solid color-mix(in oklch, var(--color-spectral), transparent 82%);
+  border-radius: var(--space-2);
+  transition: border-color var(--duration-micro) var(--ease-out), transform var(--duration-micro) var(--ease-out);
+}
+
+.github-link:hover {
+  border-color: color-mix(in oklch, var(--color-spectral), transparent 56%);
+  transform: translateY(-1px);
+}
+
+.github-link svg {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
 }
 
 .model-card[data-model="sol"],
@@ -257,18 +289,46 @@
   animation: scene-enter var(--duration-enter) var(--ease-enter) both;
 }
 
-.scene-back {
+.scene-controls {
   position: absolute;
   z-index: 2;
   top: var(--space-4);
   left: var(--space-4);
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.scene-back,
+.camera-rotation-toggle {
   min-height: 44px;
-  padding: var(--space-3) var(--space-4);
   color: var(--color-spectral);
   cursor: pointer;
   background: color-mix(in oklch, var(--color-space), transparent 8%);
   border: 1px solid color-mix(in oklch, var(--color-spectral), transparent 82%);
   border-radius: var(--space-3);
+}
+
+.scene-back {
+  padding: var(--space-3) var(--space-4);
+}
+
+.camera-rotation-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  padding: 0;
+}
+
+.camera-rotation-toggle svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+.camera-rotation-toggle[aria-pressed="true"] {
+  border-color: color-mix(in oklch, var(--color-cobalt), var(--color-spectral) 36%);
 }
 
 .scene-copy {
@@ -920,6 +980,10 @@
 }
 
 @media (max-width: 420px) {
+  .scene-controls {
+    flex-direction: column;
+  }
+
   .scene-card-summary {
     grid-template-columns: minmax(0, 1fr) auto;
   }
