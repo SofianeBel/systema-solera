@@ -1,0 +1,32 @@
+{
+  "name": "systema-solera",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "e2e": "playwright test",
+    "lint": "npm run typecheck"
+  },
+  "dependencies": {
+    "@react-three/fiber": "latest",
+    "next": "^16.2.9",
+    "react": "latest",
+    "react-dom": "latest",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@types/three": "^0.180.0",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}

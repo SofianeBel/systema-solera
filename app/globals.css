@@ -1,0 +1,67 @@
+@import "./solera.css";
+
+:root {
+  --color-page: oklch(0.985 0 0);
+  --color-space: oklch(0.075 0 0);
+  --color-space-deep: oklch(0.025 0 0);
+  --color-spectral: oklch(0.96 0.011 255);
+  --color-muted: oklch(0.72 0.018 255);
+  --color-faint: oklch(0.53 0.018 255);
+  --color-cobalt: oklch(0.541 0.122 248.2);
+  --color-sol: oklch(0.78 0.17 78);
+  --color-terra: oklch(0.65 0.12 203);
+  --color-luna: oklch(0.79 0.018 255);
+  --color-heat: oklch(0.62 0.18 38);
+  --color-focus: oklch(0.68 0.16 248.2);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+  --duration-micro: 140ms;
+  --duration-card: 700ms;
+  --duration-enter: 1100ms;
+  --duration-exit: 650ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-enter: cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--color-space-deep);
+  color: var(--color-spectral);
+  color-scheme: dark;
+}
+
+body {
+  min-height: 100dvh;
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--color-page);
+  font-family: var(--font-geist-sans), Arial, Helvetica Neue, system-ui, sans-serif;
+  text-rendering: geometricPrecision;
+}
+
+button {
+  font: inherit;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
