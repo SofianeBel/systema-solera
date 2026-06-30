@@ -49,6 +49,20 @@ export class SoleraLiveRoomRegistry {
     this.anonymousClientOrdinal = 0;
   }
 
+  hasActiveAssignment(region: SoleraLiveRegion, roomId: string, clientId: string, now = new Date()): boolean {
+    const normalizedClientId = clientId.trim();
+    if (!normalizedClientId) {
+      return false;
+    }
+
+    const nowMs = now.getTime();
+    const regionRooms = this.activeRooms(region, nowMs);
+    const room = regionRooms.find((candidateRoom) => candidateRoom.roomId === roomId);
+    const expiresAtMs = room?.occupants.get(normalizedClientId);
+
+    return expiresAtMs !== undefined && expiresAtMs > nowMs;
+  }
+
   private get maxRoomSize(): number {
     return this.options.maxRoomSize ?? SOLERA_LIVE_ROOM_MAX_SIZE;
   }

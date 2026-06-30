@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSoleraLivePublicConfig } from "@/lib/solera-live/config";
 import { createSoleraLiveAblyTokenRequest } from "@/lib/solera-live/ably-token";
 import { isSoleraLiveRegion } from "@/lib/solera-live/region";
+import { soleraLiveRoomRegistry } from "@/lib/solera-live/rooms";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +35,10 @@ export async function POST(request: NextRequest) {
 
   if (!clientId || !roomId || !isSoleraLiveRegion(region) || !roomId.startsWith(`solera-${region}-`)) {
     return NextResponse.json({ error: "Invalid token request." }, { status: 400 });
+  }
+
+  if (!soleraLiveRoomRegistry.hasActiveAssignment(region, roomId, clientId)) {
+    return NextResponse.json({ error: "Token request is not authorized." }, { status: 403 });
   }
 
   if (config.provider === "mock") {
