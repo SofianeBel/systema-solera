@@ -16,6 +16,7 @@ import { getModelById, MODEL_IDS } from "@/lib/models";
 import { closeScene, openScene, selectedModelId, type SceneState } from "@/lib/scene-state";
 import { resolveRenderingProfile, type RenderingProfile } from "@/lib/rendering-profile";
 import { DebugControls } from "./debug-controls";
+import { SoleraLivePanel } from "./solera-live-panel";
 
 const CelestialPreview = dynamic(() => import("./webgl/celestial-preview"), {
   ssr: false,
@@ -315,6 +316,7 @@ export function SoleraExperience({ models }: SoleraExperienceProps) {
           </div>
         </section>
       ) : null}
+      <SoleraLivePanel selectedModelId={currentModelId ?? "sol"} />
       <DebugControls settings={debugSettings} onReset={() => setDebugSettings(DEFAULT_DEBUG_SETTINGS)} onSettingsChange={updateDebugSetting} />
       <span className="sr-only" aria-live="polite">{selectedModel ? `${selectedModel.name} scene open` : "Model grid visible"}</span>
     </main>

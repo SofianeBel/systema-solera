@@ -39,12 +39,23 @@ npm run e2e        # run Playwright e2e tests
 npm run lint       # alias for typecheck
 ```
 
+## Solera Live
+
+Solera Live is controlled by a public feature flag and remains disabled by default.
+
+```bash
+SOLERA_LIVE_ENABLED=true
+ABLY_API_KEY=your-ably-api-key
+```
+
+When `SOLERA_LIVE_ENABLED=true` and no `ABLY_API_KEY` is configured, the app uses a local mock realtime adapter so development and tests can run without provider secrets. Real deployment should use Ably token auth through `/api/solera-live/token`; provider keys stay server-only. Reports are written to Netlify Blobs when available and fall back to in-memory storage in plain local development.
+
 ## Project Notes
 
 - `PRODUCT.md` describes the product intent and audience.
 - `DESIGN.md` documents the visual system, motion rules, and layout constraints.
 - `public/textures/solera/ATTRIBUTION.md` documents texture sources and usage notes.
-- `.env.example` is intentionally empty because the app has no required local secrets.
+- `.env.example` documents optional Solera Live configuration.
 
 ## Quality Bar
 

@@ -992,3 +992,259 @@
     display: none;
   }
 }
+
+.solera-live-panel {
+  position: fixed;
+  left: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 28;
+  display: grid;
+  width: min(31rem, calc(100vw - var(--space-8)));
+  gap: var(--space-2);
+  color: var(--color-spectral);
+}
+
+.solera-live-bar,
+.solera-live-entry,
+.solera-live-chat,
+.solera-live-feedback {
+  background: color-mix(in oklch, var(--color-space), transparent 8%);
+  border: 1px solid color-mix(in oklch, var(--color-spectral), transparent 84%);
+  border-radius: 8px;
+  backdrop-filter: blur(18px);
+}
+
+.solera-live-bar {
+  display: grid;
+  min-height: 44px;
+  grid-template-columns: auto auto auto auto 1fr auto auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.solera-live-dot {
+  width: 9px;
+  height: 9px;
+  background: var(--color-faint);
+  border-radius: 50%;
+  box-shadow: 0 0 16px color-mix(in oklch, var(--color-faint), transparent 36%);
+}
+
+.solera-live-bar[data-state="connected"] .solera-live-dot {
+  background: var(--color-terra);
+  box-shadow: 0 0 16px color-mix(in oklch, var(--color-terra), transparent 18%);
+}
+
+.solera-live-bar[data-state="connecting"] .solera-live-dot,
+.solera-live-bar[data-state="reconnecting"] .solera-live-dot {
+  background: var(--color-sol);
+}
+
+.solera-live-bar[data-state="error"] .solera-live-dot,
+.solera-live-bar[data-state="offline"] .solera-live-dot {
+  background: var(--color-heat);
+}
+
+.solera-live-title,
+.solera-live-state,
+.solera-live-meta,
+.solera-live-entry span {
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.solera-live-title {
+  color: var(--color-spectral);
+  font-weight: 650;
+}
+
+.solera-live-state,
+.solera-live-meta,
+.solera-live-entry span {
+  color: color-mix(in oklch, var(--color-spectral), transparent 36%);
+}
+
+.solera-live-meta {
+  padding: 0 var(--space-1);
+}
+
+.solera-live-join,
+.solera-live-icon-button,
+.solera-live-chat-form button,
+.solera-live-message-actions button {
+  min-height: 32px;
+  color: var(--color-spectral);
+  cursor: pointer;
+  background: color-mix(in oklch, var(--color-space-deep), transparent 10%);
+  border: 1px solid color-mix(in oklch, var(--color-spectral), transparent 82%);
+  border-radius: 8px;
+}
+
+.solera-live-join,
+.solera-live-icon-button {
+  padding: 0 var(--space-3);
+  white-space: nowrap;
+}
+
+.solera-live-join:disabled,
+.solera-live-icon-button:disabled,
+.solera-live-chat-form button:disabled {
+  color: color-mix(in oklch, var(--color-spectral), transparent 58%);
+  cursor: not-allowed;
+}
+
+.solera-live-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 11rem;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.solera-live-entry label {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.solera-live-entry input,
+.solera-live-entry select,
+.solera-live-chat-form input {
+  min-width: 0;
+  min-height: 36px;
+  width: 100%;
+  color: var(--color-spectral);
+  background: color-mix(in oklch, var(--color-space-deep), transparent 4%);
+  border: 1px solid color-mix(in oklch, var(--color-spectral), transparent 86%);
+  border-radius: 8px;
+}
+
+.solera-live-entry input,
+.solera-live-chat-form input {
+  padding: 0 var(--space-2);
+}
+
+.solera-live-entry select {
+  padding: 0 var(--space-2);
+}
+
+.solera-live-chat {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.solera-live-messages {
+  display: grid;
+  max-height: 18rem;
+  gap: var(--space-2);
+  overflow: auto;
+}
+
+.solera-live-messages > p,
+.solera-live-message p,
+.solera-live-feedback {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.solera-live-message {
+  display: grid;
+  gap: 4px;
+  padding: var(--space-2);
+  background: color-mix(in oklch, var(--color-space-deep), transparent 12%);
+  border: 1px solid color-mix(in oklch, var(--color-spectral), transparent 90%);
+  border-radius: 8px;
+}
+
+.solera-live-message strong {
+  color: var(--color-spectral);
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+
+.solera-live-message-actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.solera-live-message-actions button {
+  min-height: 28px;
+  padding: 0 var(--space-2);
+  color: color-mix(in oklch, var(--color-spectral), transparent 18%);
+  font-size: 0.76rem;
+}
+
+.solera-live-chat-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+}
+
+.solera-live-chat-form button {
+  padding: 0 var(--space-3);
+}
+
+.solera-live-feedback {
+  padding: var(--space-2);
+}
+
+.solera-live-markers {
+  position: fixed;
+  inset: 0;
+  z-index: 18;
+  pointer-events: none;
+}
+
+.solera-live-marker {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--color-space-deep);
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--marker-color);
+  border: 1px solid color-mix(in oklch, var(--marker-color), white 36%);
+  border-radius: 50%;
+  box-shadow: 0 0 22px color-mix(in oklch, var(--marker-color), transparent 18%);
+  transform: translate(-50%, -50%);
+}
+
+.solera-live-join:focus-visible,
+.solera-live-icon-button:focus-visible,
+.solera-live-entry input:focus-visible,
+.solera-live-entry select:focus-visible,
+.solera-live-chat-form input:focus-visible,
+.solera-live-chat-form button:focus-visible,
+.solera-live-message-actions button:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 2px var(--color-focus);
+}
+
+@media (max-width: 680px) {
+  .solera-live-panel {
+    right: var(--space-3);
+    bottom: var(--space-3);
+    left: var(--space-3);
+    width: auto;
+  }
+
+  .solera-live-bar {
+    grid-template-columns: auto auto auto 1fr;
+  }
+
+  .solera-live-entry {
+    grid-template-columns: 1fr;
+  }
+
+  .solera-live-meta {
+    display: none;
+  }
+}
