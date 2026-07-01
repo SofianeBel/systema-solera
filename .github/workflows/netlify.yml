@@ -52,7 +52,12 @@ jobs:
       - name: Test
         run: npm run test:run
 
+      - name: Skip Netlify dev deploy
+        if: ${{ env.NETLIFY_AUTH_TOKEN == '' || env.NETLIFY_SITE_ID == '' }}
+        run: echo "::notice::Skipping Netlify dev deploy because NETLIFY_AUTH_TOKEN or NETLIFY_DEV_SITE_ID is not configured."
+
       - name: Deploy to Netlify dev
+        if: ${{ env.NETLIFY_AUTH_TOKEN != '' && env.NETLIFY_SITE_ID != '' }}
         run: npx --yes netlify-cli@latest deploy --prod --context dev --auth "$NETLIFY_AUTH_TOKEN" --site "$NETLIFY_SITE_ID" --message "dev ${GITHUB_SHA}"
 
   deploy-prod:
@@ -82,5 +87,10 @@ jobs:
       - name: Test
         run: npm run test:run
 
+      - name: Skip Netlify prod deploy
+        if: ${{ env.NETLIFY_AUTH_TOKEN == '' || env.NETLIFY_SITE_ID == '' }}
+        run: echo "::notice::Skipping Netlify prod deploy because NETLIFY_AUTH_TOKEN or NETLIFY_PROD_SITE_ID is not configured."
+
       - name: Deploy to Netlify prod
+        if: ${{ env.NETLIFY_AUTH_TOKEN != '' && env.NETLIFY_SITE_ID != '' }}
         run: npx --yes netlify-cli@latest deploy --prod --context production --auth "$NETLIFY_AUTH_TOKEN" --site "$NETLIFY_SITE_ID" --message "prod ${GITHUB_SHA}"
