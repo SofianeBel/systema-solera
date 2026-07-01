@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { type NextRequest } from "next/server";
+import { SOLERA_LIVE_MAX_ACTIVE_ROOMS, SOLERA_LIVE_ROOM_MAX_SIZE } from "@/lib/solera-live/config";
 import { soleraLiveRoomRegistry } from "@/lib/solera-live/rooms";
 import { POST } from "./route";
 
@@ -21,10 +22,13 @@ describe("Solera Live room assignment route", () => {
     vi.stubEnv("SOLERA_LIVE_ENABLED", "true");
 
     const response = await POST(createAssignRequest({ requestedRegion: "eu", clientId: "user-1", displayName: "Aster" }));
-    const body = (await response.json()) as { chatToken?: string; roomId?: string };
+    const body = (await response.json()) as { assignmentProof?: string; chatToken?: string; clientId?: string; roomId?: string };
 
     expect(response.status).toBe(200);
     expect(body.roomId).toBe("solera-eu-001");
+    expect(body.clientId).toMatch(/^client-/);
+    expect(body.clientId).not.toBe("user-1");
+    expect(typeof body.assignmentProof).toBe("string");
     expect(typeof body.chatToken).toBe("string");
   });
 
@@ -46,5 +50,20 @@ describe("Solera Live room assignment route", () => {
     expect(body.region).toBe("us");
     expect(body.roomId).toBe("solera-us-001");
     expect(body.chatToken).toBeUndefined();
+  });
+
+  it("Given active room capacity is exhausted When assigning another room Then it returns a bounded error", async () => {
+    vi.stubEnv("SOLERA_LIVE_ENABLED", "true");
+
+    for (let index = 0; index < SOLERA_LIVE_MAX_ACTIVE_ROOMS * SOLERA_LIVE_ROOM_MAX_SIZE; index += 1) {
+      const response = await POST(createAssignRequest({ requestedRegion: "eu" }));
+      expect(response.status).toBe(200);
+    }
+
+    const response = await POST(createAssignRequest({ requestedRegion: "eu" }));
+    const body = (await response.json()) as { error?: string };
+
+    expect(response.status).toBe(429);
+    expect(body.error).toBe("Solera Live is at capacity. Try again soon.");
   });
 });

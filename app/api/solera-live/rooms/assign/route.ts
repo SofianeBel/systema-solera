@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createSoleraLiveChatToken } from "@/lib/solera-live/chat-token";
 import { getSoleraLivePublicConfig } from "@/lib/solera-live/config";
-import { soleraLiveRoomRegistry } from "@/lib/solera-live/rooms";
-import { type SoleraLiveClientHints, type SoleraLiveRegion, type SoleraLiveRoomAssignmentRequest } from "@/lib/solera-live/types";
+import { SoleraLiveRoomCapacityError, soleraLiveRoomRegistry } from "@/lib/solera-live/rooms";
+import { type SoleraLiveClientHints, type SoleraLiveRegion, type SoleraLiveRoomAssignment, type SoleraLiveRoomAssignmentRequest } from "@/lib/solera-live/types";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +68,7 @@ async function readRequestBody(request: NextRequest): Promise<SoleraLiveRoomAssi
     const requestedRegion = stringField(payload, "requestedRegion", 16);
     const previousRoomId = stringField(payload, "previousRoomId", 80);
     const clientId = stringField(payload, "clientId", 80);
+    const assignmentProof = stringField(payload, "assignmentProof", 120);
     const displayName = stringField(payload, "displayName", 24);
     const clientHints = readClientHints(payload["clientHints"]);
 
@@ -75,6 +76,7 @@ async function readRequestBody(request: NextRequest): Promise<SoleraLiveRoomAssi
       ...(requestedRegion ? { requestedRegion } : {}),
       ...(previousRoomId ? { previousRoomId } : {}),
       ...(clientId ? { clientId } : {}),
+      ...(assignmentProof ? { assignmentProof } : {}),
       ...(displayName ? { displayName } : {}),
       ...(clientHints ? { clientHints } : {}),
     };
@@ -91,11 +93,20 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await readRequestBody(request);
-  const assignment = soleraLiveRoomRegistry.assign(body);
+  let assignment: SoleraLiveRoomAssignment;
+  try {
+    assignment = soleraLiveRoomRegistry.assign(body);
+  } catch (error) {
+    if (error instanceof SoleraLiveRoomCapacityError) {
+      return NextResponse.json({ error: error.message }, { status: 429 });
+    }
+
+    throw error;
+  }
   const chatToken =
-    body.clientId && body.displayName
+    body.displayName
       ? createSoleraLiveChatToken({
-          userId: body.clientId,
+          userId: assignment.clientId,
           displayName: body.displayName,
           roomId: assignment.roomId,
           region: assignment.region,

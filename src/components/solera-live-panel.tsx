@@ -164,6 +164,7 @@ export function SoleraLivePanel({ selectedModelId }: SoleraLivePanelProps) {
             requestedRegion: regionChoice === "auto" ? "auto" : regionChoice,
             previousRoomId: options.reconnect ? assignmentRef.current?.roomId : null,
             clientId: nextIdentity.userId,
+            assignmentProof: options.reconnect ? assignmentRef.current?.assignmentProof : undefined,
             displayName: nextIdentity.displayName,
             clientHints: readClientHints(),
           }),
@@ -174,6 +175,9 @@ export function SoleraLivePanel({ selectedModelId }: SoleraLivePanelProps) {
         }
 
         const nextAssignment = (await assignmentResponse.json()) as SoleraLiveRoomAssignment;
+        const assignedIdentity = { ...nextIdentity, userId: nextAssignment.clientId };
+        identityRef.current = assignedIdentity;
+        setIdentity(assignedIdentity);
         assignmentRef.current = nextAssignment;
         setAssignment(nextAssignment);
         connectionRef.current?.disconnect();
@@ -181,7 +185,7 @@ export function SoleraLivePanel({ selectedModelId }: SoleraLivePanelProps) {
         connectionRef.current = await connectSoleraLiveRealtime({
           provider: config.provider,
           assignment: nextAssignment,
-          identity: nextIdentity,
+          identity: assignedIdentity,
           selectedModelId,
           callbacks: {
             onStatusChange: setStatus,
@@ -332,6 +336,7 @@ export function SoleraLivePanel({ selectedModelId }: SoleraLivePanelProps) {
         messageId: message.messageId,
         roomId: assignment.roomId,
         region: assignment.region,
+        assignmentProof: assignment.assignmentProof,
         reason: "unsafe",
         messageText: message.text,
       }),

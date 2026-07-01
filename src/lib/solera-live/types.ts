@@ -44,6 +44,7 @@ export type SoleraLiveRoomAssignmentRequest = Readonly<{
   requestedRegion?: SoleraLiveRegion | "auto" | string;
   previousRoomId?: string | null;
   clientId?: string;
+  assignmentProof?: string;
   displayName?: string;
   clientHints?: SoleraLiveClientHints;
 }>;
@@ -51,6 +52,8 @@ export type SoleraLiveRoomAssignmentRequest = Readonly<{
 export type SoleraLiveRoomAssignment = Readonly<{
   region: SoleraLiveRegion;
   roomId: string;
+  clientId: string;
+  assignmentProof: string;
   occupancyEstimate: number;
   channels: SoleraLiveChannels;
   expiresAt: string;

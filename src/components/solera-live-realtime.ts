@@ -137,6 +137,7 @@ async function connectAblyRealtime(input: ConnectInput): Promise<SoleraLiveRealt
   const Ably = await import("ably");
   const tokenPayload = {
     clientId: input.identity.userId,
+    assignmentProof: input.assignment.assignmentProof,
     region: input.assignment.region,
     roomId: input.assignment.roomId,
   };

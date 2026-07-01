@@ -3,6 +3,7 @@ import { SOLERA_LIVE_REGIONS, type SoleraLivePublicConfig, type SoleraLiveProvid
 
 export const SOLERA_LIVE_ROOM_TARGET_SIZE = 8;
 export const SOLERA_LIVE_ROOM_MAX_SIZE = 16;
+export const SOLERA_LIVE_MAX_ACTIVE_ROOMS = 32;
 export const SOLERA_LIVE_ASSIGNMENT_TTL_SECONDS = 120;
 export const SOLERA_LIVE_TOKEN_TTL_SECONDS = 15 * 60;
 export const SOLERA_LIVE_CHAT_MAX_LENGTH = 240;

@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 type TokenPayload = Readonly<{
   clientId?: unknown;
+  assignmentProof?: unknown;
   region?: unknown;
   roomId?: unknown;
 }>;
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
 
   const payload = await readPayload(request);
   const clientId = typeof payload.clientId === "string" ? payload.clientId.trim() : "";
+  const assignmentProof = typeof payload.assignmentProof === "string" ? payload.assignmentProof.trim() : "";
   const roomId = typeof payload.roomId === "string" ? payload.roomId.trim() : "";
   const region = payload.region;
 
@@ -37,7 +39,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid token request." }, { status: 400 });
   }
 
-  if (!soleraLiveRoomRegistry.hasActiveAssignment(region, roomId, clientId)) {
+  if (!soleraLiveRoomRegistry.hasActiveAssignment(region, roomId, clientId, assignmentProof)) {
     return NextResponse.json({ error: "Token request is not authorized." }, { status: 403 });
   }
 
