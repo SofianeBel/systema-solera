@@ -26,13 +26,6 @@ function readChatToken(payload: unknown): string | undefined {
   return typeof token === "string" ? token : undefined;
 }
 
-function readRateLimitKey(request: NextRequest): string {
-  const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const realIp = request.headers.get("x-real-ip")?.trim();
-
-  return forwardedFor || realIp || "unknown-client";
-}
-
 export async function POST(request: NextRequest) {
   const config = getSoleraLivePublicConfig();
 
@@ -57,7 +50,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Chat authorization is invalid." }, { status: 403 });
   }
 
-  const rateLimit = serverChatRateLimiter.check(readRateLimitKey(request));
+  const rateLimit = serverChatRateLimiter.check(validation.chatMessage.userId);
   if (!rateLimit.ok) {
     return NextResponse.json({ error: rateLimit.message, retryAfterMs: rateLimit.retryAfterMs }, { status: 429 });
   }

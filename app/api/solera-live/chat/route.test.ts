@@ -94,12 +94,12 @@ describe("Solera Live chat route", () => {
     expect(body.error).toBe("Chat authorization is invalid.");
   });
 
-  it("Given rotated user ids from one client When posting repeatedly Then server rate limiting still applies", async () => {
+  it("Given rotated forwarding headers from one authorized user When posting repeatedly Then server rate limiting still applies", async () => {
     vi.stubEnv("SOLERA_LIVE_ENABLED", "true");
     vi.stubEnv("SOLERA_LIVE_REALTIME_PROVIDER", "mock");
 
     const responses = await Promise.all(
-      Array.from({ length: 6 }, (_, index) => POST(createChatRequest(`Hello Solera ${index}`, { ip: "203.0.113.9", userId: `rotating-user-${index}` }))),
+      Array.from({ length: 6 }, (_, index) => POST(createChatRequest(`Hello Solera ${index}`, { ip: `203.0.113.${index + 1}`, userId: "stable-user" }))),
     );
 
     expect(responses.slice(0, 5).every((response) => response.status === 200)).toBe(true);
