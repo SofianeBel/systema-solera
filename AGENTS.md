@@ -62,6 +62,17 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## 5. Branch, Commit, PR Discipline
+
+**Work on a branch. Implement narrowly. Open a PR with atomic commits.**
+
+For non-trivial changes:
+- Create a dedicated branch before implementation.
+- Keep commits atomic: one coherent change per commit.
+- Verify each change before committing.
+- Open a PR instead of merging directly to the production branch.
+- Keep PR descriptions concise: summary, verification, and any known tradeoffs.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

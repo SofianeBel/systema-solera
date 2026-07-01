@@ -1,0 +1,86 @@
+name: Netlify
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - develop
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Netlify target
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - prod
+
+permissions:
+  contents: read
+
+concurrency:
+  group: netlify-${{ github.ref }}-${{ github.event_name == 'workflow_dispatch' && inputs.target || 'push' }}
+  cancel-in-progress: true
+
+jobs:
+  deploy-dev:
+    name: Deploy dev
+    if: ${{ (github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/develop')) || (github.event_name == 'workflow_dispatch' && inputs.target == 'dev') }}
+    runs-on: ubuntu-latest
+    environment: netlify-dev
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_DEV_SITE_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test:run
+
+      - name: Deploy to Netlify dev
+        run: npx --yes netlify-cli@latest deploy --prod --context dev --auth "$NETLIFY_AUTH_TOKEN" --site "$NETLIFY_SITE_ID" --message "dev ${GITHUB_SHA}"
+
+  deploy-prod:
+    name: Deploy prod
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && inputs.target == 'prod' && github.ref == 'refs/heads/main') }}
+    runs-on: ubuntu-latest
+    environment: netlify-prod
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_PROD_SITE_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test:run
+
+      - name: Deploy to Netlify prod
+        run: npx --yes netlify-cli@latest deploy --prod --context production --auth "$NETLIFY_AUTH_TOKEN" --site "$NETLIFY_SITE_ID" --message "prod ${GITHUB_SHA}"
