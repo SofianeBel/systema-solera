@@ -518,6 +518,22 @@
   transform: translateY(-4px);
 }
 
+.landing-view[data-transition-active="true"] {
+  pointer-events: none;
+}
+
+.model-card[data-transition-state="selected"] {
+  z-index: 1;
+  filter: saturate(1.18) contrast(1.08);
+  transform: scale(1.025);
+}
+
+.model-card[data-transition-state="dimmed"] {
+  filter: saturate(0.34) brightness(0.44);
+  opacity: 0.38;
+  transform: scale(0.985);
+}
+
 .card-wash {
   background:
     linear-gradient(90deg, color-mix(in oklch, var(--color-space-deep), transparent 82%) 0 28%, transparent 58%),
@@ -604,6 +620,20 @@
 
 .scene-view .canvas-fill:active {
   cursor: grabbing;
+}
+
+.black-hole-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  background: rgb(0 0 0 / var(--transition-shield-opacity, 1));
+  contain: paint;
+}
+
+.black-hole-transition-canvas {
+  width: 100%;
+  height: 100%;
 }
 
 .debug-controls {

@@ -1,5 +1,6 @@
 import { assertNever } from "../../lib/assert-never";
 import type { ModelId } from "../../lib/models";
+import * as THREE from "three";
 
 export type BodyTextureSurface = "preview" | "immersive";
 export type TextureQuality = "2k" | "8k";
@@ -55,25 +56,66 @@ function texturePath(fileName: string): string {
 }
 
 export function getBodyTextureAssets(modelId: ModelId, surface: BodyTextureSurface, quality: TextureQuality): BodyTextureAssets {
+  const effectiveQuality = surface === "preview" ? "2k" : quality;
+
   switch (modelId) {
     case "sol":
       return {
-        colorMap: texturePath(`${quality}_sun.jpg`),
+        colorMap: texturePath(`${effectiveQuality}_sun.jpg`),
         attributions: [SOLAR_SYSTEM_SCOPE],
       };
     case "terra":
       return {
-        colorMap: texturePath(`${quality}_earth_daymap.jpg`),
-        cloudMap: texturePath(`${quality}_earth_clouds.jpg`),
-        nightMap: texturePath(`${quality}_earth_nightmap.jpg`),
+        colorMap: texturePath(`${effectiveQuality}_earth_daymap.jpg`),
+        cloudMap: texturePath(`${effectiveQuality}_earth_clouds.jpg`),
+        nightMap: texturePath(`${effectiveQuality}_earth_nightmap.jpg`),
         attributions: [NASA_BLUE_MARBLE, NASA_BLACK_MARBLE, SOLAR_SYSTEM_SCOPE],
       };
     case "luna":
       return {
-        colorMap: texturePath(`${quality}_moon.jpg`),
+        colorMap: texturePath(`${effectiveQuality}_moon.jpg`),
         attributions: [NASA_MOON_KIT],
       };
     default:
       return assertNever(modelId);
   }
+}
+
+const textureCache = new Map<string, Promise<THREE.Texture>>();
+
+function textureUrls(assets: BodyTextureAssets): string[] {
+  return Array.from(new Set([assets.colorMap, assets.cloudMap, assets.nightMap].filter((url): url is string => Boolean(url))));
+}
+
+function configureColorTexture(texture: THREE.Texture): THREE.Texture {
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  return texture;
+}
+
+export function loadTextureAsset(url: string): Promise<THREE.Texture> {
+  const cached = textureCache.get(url);
+  if (cached) {
+    return cached;
+  }
+
+  const promise = new Promise<THREE.Texture>((resolve, reject) => {
+    new THREE.TextureLoader().load(
+      url,
+      (texture) => resolve(configureColorTexture(texture)),
+      undefined,
+      (error) => reject(error),
+    );
+  });
+  textureCache.set(url, promise);
+  return promise;
+}
+
+export async function preloadBodyTextures(modelId: ModelId, surface: BodyTextureSurface, quality: TextureQuality): Promise<void> {
+  const assets = getBodyTextureAssets(modelId, surface, quality);
+  await Promise.all(textureUrls(assets).map((url) => loadTextureAsset(url)));
 }

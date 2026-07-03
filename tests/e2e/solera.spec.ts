@@ -83,10 +83,15 @@ test("cards open into an immersive scene and return with Escape and browser Back
   await expect(page.getByText("$5.00")).toBeVisible();
   await expect(page.getByText("$0.50")).toBeVisible();
   await expect(page.getByText("$30.00")).toBeVisible();
+  await expect(page.locator('.model-card[data-model="terra"] canvas')).toBeVisible();
 
   await page.getByRole("button", { name: "Enter Terra immersive scene" }).click();
+  await expect(page.locator(".black-hole-transition")).toBeVisible();
+  await expect(page.locator(".black-hole-transition")).toHaveCSS("background-color", "rgb(0, 0, 0)");
+  await expect(page.locator('.model-card[data-model="terra"]')).toHaveAttribute("data-transition-state", "selected");
   await expect(page.getByRole("button", { name: "Return to model grid" })).toBeFocused();
   await expect(page.getByRole("region", { name: "Terra immersive scene" })).toBeVisible();
+  await expect(page.locator(".black-hole-transition")).toBeHidden();
   await expect(page.locator(".scene-view canvas")).toBeVisible();
   await expect(page.getByRole("button", { name: "Pause camera orbit" })).toHaveAttribute("aria-pressed", "false");
   await expect(page.getByRole("button", { name: "Expand Terra scene details, Input $2.50" })).toBeVisible();
@@ -137,6 +142,17 @@ test("cards open into an immersive scene and return with Escape and browser Back
   await expect(page.getByRole("region", { name: "Terra immersive scene" })).toBeVisible();
   await page.getByRole("button", { name: "Expand Terra scene details, Input $2.50" }).click();
   await expect(page.getByText("Clouds and night lights")).toBeVisible();
+});
+
+test("reduced motion opens scenes without the shader tunnel", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Enter Luna immersive scene" }).click();
+
+  await expect(page.locator(".black-hole-transition")).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Luna immersive scene" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Return to model grid" })).toBeFocused();
 });
 
 test("Solera Live disabled fallback preserves the solo grid", async ({ page }) => {

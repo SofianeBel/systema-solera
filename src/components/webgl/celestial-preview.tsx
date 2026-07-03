@@ -8,6 +8,7 @@ import type { RenderingProfile } from "@/lib/rendering-profile";
 import { canvasDpr } from "@/lib/rendering-profile";
 import { CelestialBody } from "./celestial-body";
 import { configureRenderer, rendererSettings } from "./renderer-settings";
+import { SceneWarmup } from "./scene-warmup";
 import { Starfield } from "./starfield";
 
 type CelestialPreviewProps = Readonly<{
@@ -53,6 +54,7 @@ export default function CelestialPreview({ debugSettings, modelId, profile }: Ce
       <group position={composition.position}>
         <CelestialBody debugSettings={debugSettings} modelId={modelId} profile={profile} scale={composition.scale * debugSettings.sceneScale} surface="preview" />
       </group>
+      <SceneWarmup cacheKey={`preview:${modelId}:${profile.sphereSegments}`} />
     </Canvas>
   );
 }

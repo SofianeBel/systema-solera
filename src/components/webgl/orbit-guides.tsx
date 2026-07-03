@@ -114,9 +114,10 @@ function OrbitSweep({ animated, color, opacity, position, radius, speed }: Orbit
 function SceneBody({ debugSettings, modelId, profile, selectedModelId }: SceneBodyProps) {
   const metric = getCelestialMetric(modelId);
   const scale = renderedSceneRadius(modelId, selectedModelId) * debugSettings.sceneScale;
+  const surface = modelId === selectedModelId ? "immersive" : "preview";
   return (
     <group position={metric.scenePosition}>
-      <CelestialBody debugSettings={debugSettings} modelId={modelId} profile={profile} scale={scale} surface="immersive" />
+      <CelestialBody debugSettings={debugSettings} modelId={modelId} profile={profile} scale={scale} surface={surface} />
     </group>
   );
 }
@@ -133,6 +134,7 @@ function OrbitingLuna({ debugSettings, profile, selectedModelId }: Omit<SceneBod
       ),
     [lunaMetric.scenePosition, terraMetric.scenePosition],
   );
+  const surface = selectedModelId === "luna" ? "immersive" : "preview";
 
   useEffect(() => {
     if (selectedModelId === "luna" && orbitRef.current) {
@@ -150,7 +152,7 @@ function OrbitingLuna({ debugSettings, profile, selectedModelId }: Omit<SceneBod
   return (
     <group position={terraMetric.scenePosition} ref={orbitRef}>
       <group position={[lunaOffset.x, lunaOffset.y, lunaOffset.z]}>
-        <CelestialBody debugSettings={debugSettings} modelId="luna" profile={profile} scale={renderedSceneRadius("luna", selectedModelId) * debugSettings.sceneScale} surface="immersive" />
+        <CelestialBody debugSettings={debugSettings} modelId="luna" profile={profile} scale={renderedSceneRadius("luna", selectedModelId) * debugSettings.sceneScale} surface={surface} />
       </group>
     </group>
   );

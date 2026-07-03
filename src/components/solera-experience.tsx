@@ -17,6 +17,8 @@ import { closeScene, openScene, selectedModelId, type SceneState } from "@/lib/s
 import { resolveRenderingProfile, type RenderingProfile } from "@/lib/rendering-profile";
 import { DebugControls } from "./debug-controls";
 import { SoleraLivePanel } from "./solera-live-panel";
+import BlackHoleTransition from "./webgl/black-hole-transition";
+import { preloadBodyTextures } from "./webgl/texture-assets";
 
 const CelestialPreview = dynamic(() => import("./webgl/celestial-preview"), {
   ssr: false,
@@ -32,6 +34,15 @@ type SoleraExperienceProps = Readonly<{
   models: readonly ModelProfile[];
 }>;
 
+type SceneTransition = Readonly<{
+  modelId: ModelId;
+}>;
+
+function preloadSceneModules(): void {
+  void import("./webgl/black-hole-transition");
+  void import("./webgl/immersive-canvas");
+}
+
 function modelIdFromLocationHash(): ModelId | null {
   const candidateId = window.location.hash.slice(1);
   return MODEL_IDS.find((modelId) => modelId === candidateId) ?? null;
@@ -39,6 +50,7 @@ function modelIdFromLocationHash(): ModelId | null {
 
 export function SoleraExperience({ models }: SoleraExperienceProps) {
   const [state, setState] = useState<SceneState>({ status: "grid" });
+  const [transition, setTransition] = useState<SceneTransition | null>(null);
   const [cameraAutoRotatePaused, setCameraAutoRotatePaused] = useState(false);
   const [scenePanelExpanded, setScenePanelExpanded] = useState(false);
   const [profile, setProfile] = useState<RenderingProfile>(() =>
@@ -48,7 +60,10 @@ export function SoleraExperience({ models }: SoleraExperienceProps) {
   const buttonRefs = useRef(new Map<ModelId, HTMLAnchorElement>());
   const backButtonRef = useRef<HTMLButtonElement>(null);
   const originModelRef = useRef<ModelId | null>(null);
+  const warmedImmersiveProfilesRef = useRef(new Set<string>());
+  const transitionActiveRef = useRef(false);
   const currentModelId = selectedModelId(state);
+  const transitionModelId = transition?.modelId ?? null;
 
   const updateDebugSetting = useCallback(<Key extends keyof DebugSettings>(key: Key, value: DebugSettings[Key]) => {
     setDebugSettings((current) => ({ ...current, [key]: value }));
@@ -88,6 +103,8 @@ export function SoleraExperience({ models }: SoleraExperienceProps) {
   }, []);
 
   const closeSelectedScene = useCallback(() => {
+    transitionActiveRef.current = false;
+    setTransition(null);
     setCameraAutoRotatePaused(false);
     setScenePanelExpanded(false);
     setState(closeScene());
@@ -97,17 +114,114 @@ export function SoleraExperience({ models }: SoleraExperienceProps) {
     restoreOriginFocus();
   }, [restoreOriginFocus]);
 
-  const openSelectedScene = useCallback((modelId: ModelId) => {
+  const openSelectedScene = useCallback((modelId: ModelId, historyMode: "push" | "none" = "push") => {
     originModelRef.current = modelId;
     setCameraAutoRotatePaused(false);
     setScenePanelExpanded(false);
     setState(openScene(modelId));
-    window.history.pushState({ selectedModelId: modelId }, "", `#${modelId}`);
+    if (historyMode === "push") {
+      window.history.pushState({ selectedModelId: modelId }, "", `#${modelId}`);
+    }
   }, []);
+
+  useEffect(() => {
+    transitionActiveRef.current = Boolean(transition);
+  }, [transition]);
+
+  const warmImmersiveScene = useCallback(
+    (modelId: ModelId) => {
+      if (profile.mode === "css") {
+        return;
+      }
+      preloadSceneModules();
+      const warmupKey = `${modelId}:${profile.mode}:${profile.textureQuality}`;
+      if (warmedImmersiveProfilesRef.current.has(warmupKey)) {
+        return;
+      }
+
+      const preloadTextures = () => {
+        if (transitionActiveRef.current || warmedImmersiveProfilesRef.current.has(warmupKey)) {
+          return;
+        }
+        warmedImmersiveProfilesRef.current.add(warmupKey);
+        void preloadBodyTextures(modelId, "immersive", profile.textureQuality).catch(() => undefined);
+      };
+
+      const idleWindow: Partial<Pick<Window, "requestIdleCallback">> = window;
+      if (idleWindow.requestIdleCallback) {
+        idleWindow.requestIdleCallback(preloadTextures, { timeout: 1200 });
+        return;
+      }
+
+      window.setTimeout(preloadTextures, 240);
+    },
+    [profile.mode, profile.textureQuality],
+  );
+
+  const startSelectedScene = useCallback(
+    (modelId: ModelId) => {
+      preloadSceneModules();
+      originModelRef.current = modelId;
+      setCameraAutoRotatePaused(false);
+      setScenePanelExpanded(false);
+
+      if (profile.mode === "css" || !profile.animated) {
+        openSelectedScene(modelId);
+        return;
+      }
+
+      transitionActiveRef.current = true;
+      setTransition({ modelId });
+      window.history.pushState({ selectedModelId: modelId }, "", `#${modelId}`);
+    },
+    [openSelectedScene, profile.animated, profile.mode],
+  );
+
+  useEffect(() => {
+    if (profile.mode === "css") {
+      return undefined;
+    }
+
+    const idleWindow: Partial<Pick<Window, "requestIdleCallback" | "cancelIdleCallback">> = window;
+    const preloadModules = () => {
+      preloadSceneModules();
+    };
+
+    if (idleWindow.requestIdleCallback && idleWindow.cancelIdleCallback) {
+      const idleId = idleWindow.requestIdleCallback(preloadModules, { timeout: 1000 });
+      return () => idleWindow.cancelIdleCallback?.(idleId);
+    }
+
+    const timeoutId = window.setTimeout(preloadModules, 300);
+    return () => window.clearTimeout(timeoutId);
+  }, [profile.mode]);
+
+  useEffect(() => {
+    if (profile.mode === "css") {
+      return undefined;
+    }
+
+    const preloadPreviewTextures = () => {
+      MODEL_IDS.forEach((modelId) => {
+        void preloadBodyTextures(modelId, "preview", profile.textureQuality).catch(() => undefined);
+      });
+    };
+
+    const idleWindow: Partial<Pick<Window, "requestIdleCallback" | "cancelIdleCallback">> = window;
+    if (idleWindow.requestIdleCallback && idleWindow.cancelIdleCallback) {
+      const idleId = idleWindow.requestIdleCallback(preloadPreviewTextures, { timeout: 1600 });
+      return () => idleWindow.cancelIdleCallback?.(idleId);
+    }
+
+    const timeoutId = window.setTimeout(preloadPreviewTextures, 700);
+    return () => window.clearTimeout(timeoutId);
+  }, [profile.mode, profile.textureQuality]);
 
   const syncSceneFromLocation = useCallback(
     (shouldRestoreFocus: boolean) => {
       const hashModelId = modelIdFromLocationHash();
+      transitionActiveRef.current = false;
+      setTransition(null);
       if (hashModelId) {
         originModelRef.current = hashModelId;
         setCameraAutoRotatePaused(false);
@@ -133,13 +247,13 @@ export function SoleraExperience({ models }: SoleraExperienceProps) {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && currentModelId) {
+      if (event.key === "Escape" && (currentModelId || transitionModelId)) {
         closeSelectedScene();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [closeSelectedScene, currentModelId]);
+  }, [closeSelectedScene, currentModelId, transitionModelId]);
 
   useEffect(() => {
     syncSceneFromLocation(false);
@@ -155,12 +269,14 @@ export function SoleraExperience({ models }: SoleraExperienceProps) {
   }, [syncSceneFromLocation]);
 
   const selectedModel = useMemo(() => (currentModelId ? getModelById(currentModelId) : null), [currentModelId]);
+  const transitionModel = useMemo(() => (transitionModelId ? getModelById(transitionModelId) : null), [transitionModelId]);
   const selectedMetric = useMemo(() => (currentModelId ? getCelestialMetric(currentModelId) : null), [currentModelId]);
   const distantMetrics = useMemo(() => (currentModelId ? getDistantMetrics(currentModelId) : []), [currentModelId]);
+  const landingHidden = Boolean(selectedModel) || Boolean(transitionModel);
 
   return (
     <main className="solera-shell">
-      <section className="landing-view" aria-hidden={Boolean(selectedModel)} inert={selectedModel ? true : undefined}>
+      <section className="landing-view" data-transition-active={transitionModel ? "true" : undefined} aria-hidden={landingHidden} inert={landingHidden ? true : undefined}>
         <header className="site-header">
           <h1 className="brand-lockup">Systema Solera</h1>
           <p className="header-dek">A model system with gravity.</p>
@@ -176,6 +292,7 @@ export function SoleraExperience({ models }: SoleraExperienceProps) {
             <a
               className="model-card"
               data-model={model.id}
+              data-transition-state={transitionModel ? (transitionModel.id === model.id ? "selected" : "dimmed") : undefined}
               href={`#${model.id}`}
               key={model.id}
               ref={(node) => {
@@ -186,9 +303,12 @@ export function SoleraExperience({ models }: SoleraExperienceProps) {
                 }
               }}
               role="button"
+              onFocus={() => warmImmersiveScene(model.id)}
+              onPointerEnter={() => warmImmersiveScene(model.id)}
+              onTouchStart={() => warmImmersiveScene(model.id)}
               onClick={(event) => {
                 event.preventDefault();
-                openSelectedScene(model.id);
+                startSelectedScene(model.id);
               }}
               aria-label={`Enter ${model.name} immersive scene`}
             >
@@ -316,9 +436,21 @@ export function SoleraExperience({ models }: SoleraExperienceProps) {
           </div>
         </section>
       ) : null}
-      <SoleraLivePanel selectedModelId={currentModelId ?? "sol"} />
+      {transition ? (
+        <BlackHoleTransition
+          modelId={transition.modelId}
+          profile={profile}
+          onMidpoint={() => undefined}
+          onComplete={() => {
+            openSelectedScene(transition.modelId, "none");
+            transitionActiveRef.current = false;
+            setTransition(null);
+          }}
+        />
+      ) : null}
+      <SoleraLivePanel selectedModelId={currentModelId ?? transitionModelId ?? "sol"} />
       <DebugControls settings={debugSettings} onReset={() => setDebugSettings(DEFAULT_DEBUG_SETTINGS)} onSettingsChange={updateDebugSetting} />
-      <span className="sr-only" aria-live="polite">{selectedModel ? `${selectedModel.name} scene open` : "Model grid visible"}</span>
+      <span className="sr-only" aria-live="polite">{transitionModel ? `${transitionModel.name} tunnel opening` : selectedModel ? `${selectedModel.name} scene open` : "Model grid visible"}</span>
     </main>
   );
 }

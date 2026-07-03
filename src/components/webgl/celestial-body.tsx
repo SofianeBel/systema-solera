@@ -14,7 +14,7 @@ import {
   vertexShader,
 } from "./shaders";
 import { SolarMagneticArcs } from "./solar-magnetic-arcs";
-import { getBodyTextureAssets, type BodyTextureSurface } from "./texture-assets";
+import { getBodyTextureAssets, loadTextureAsset, type BodyTextureSurface } from "./texture-assets";
 
 type BodyUniforms = Readonly<{
   uTime: THREE.IUniform<number>;
@@ -55,8 +55,6 @@ type CelestialBodyProps = Readonly<{
   scale: number;
   surface: BodyTextureSurface;
 }>;
-
-const textureCache = new Map<string, Promise<THREE.Texture>>();
 
 const BODY_ROTATION_SPEED = {
   sol: 0.16,
@@ -108,36 +106,9 @@ function createSolarCoronaTexture(): THREE.Texture {
   return texture;
 }
 
-function configureColorTexture(texture: THREE.Texture): THREE.Texture {
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 8;
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.ClampToEdgeWrapping;
-  texture.minFilter = THREE.LinearMipmapLinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-  return texture;
-}
-
-function loadTexture(url: string): Promise<THREE.Texture> {
-  const cached = textureCache.get(url);
-  if (cached) {
-    return cached;
-  }
-
-  const promise = new Promise<THREE.Texture>((resolve, reject) => {
-    new THREE.TextureLoader().load(
-      url,
-      (texture) => resolve(configureColorTexture(texture)),
-      undefined,
-      (error) => reject(error),
-    );
-  });
-  textureCache.set(url, promise);
-  return promise;
-}
-
 function useBodyTextures(modelId: ModelId, surface: BodyTextureSurface, profile: RenderingProfile): LoadedBodyTextures | null {
   const assets = useMemo(() => getBodyTextureAssets(modelId, surface, profile.textureQuality), [modelId, profile.textureQuality, surface]);
+  const gl = useThree((state) => state.gl);
   const invalidate = useThree((state) => state.invalidate);
   const [textures, setTextures] = useState<LoadedBodyTextures | null>(null);
 
@@ -147,12 +118,15 @@ function useBodyTextures(modelId: ModelId, surface: BodyTextureSurface, profile:
 
     const loadTextures = async (): Promise<void> => {
       const [colorMap, cloudMap, nightMap] = await Promise.all([
-        loadTexture(assets.colorMap),
-        loadTexture(assets.cloudMap ?? assets.colorMap),
-        loadTexture(assets.nightMap ?? assets.colorMap),
+        loadTextureAsset(assets.colorMap),
+        loadTextureAsset(assets.cloudMap ?? assets.colorMap),
+        loadTextureAsset(assets.nightMap ?? assets.colorMap),
       ] as const);
 
       if (active) {
+        gl.initTexture(colorMap);
+        gl.initTexture(cloudMap);
+        gl.initTexture(nightMap);
         setTextures({ colorMap, cloudMap, nightMap });
         invalidate();
       }
@@ -172,7 +146,7 @@ function useBodyTextures(modelId: ModelId, surface: BodyTextureSurface, profile:
     return () => {
       active = false;
     };
-  }, [assets, invalidate]);
+  }, [assets, gl, invalidate]);
 
   return textures;
 }
