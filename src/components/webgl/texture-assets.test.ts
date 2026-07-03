@@ -3,9 +3,9 @@ import { getBodyTextureAssets } from "./texture-assets";
 
 describe("body texture assets", () => {
   it("Given desktop and compact profiles When textures are resolved Then quality follows the rendering budget", () => {
-    const previewTerra = getBodyTextureAssets("terra", "preview", "2k");
-    const previewSol = getBodyTextureAssets("sol", "preview", "2k");
-    const previewLuna = getBodyTextureAssets("luna", "preview", "2k");
+    const previewTerra = getBodyTextureAssets("terra", "preview", "8k");
+    const previewSol = getBodyTextureAssets("sol", "preview", "8k");
+    const previewLuna = getBodyTextureAssets("luna", "preview", "8k");
     const immersiveTerra = getBodyTextureAssets("terra", "immersive", "8k");
     const immersiveSol = getBodyTextureAssets("sol", "immersive", "8k");
     const immersiveLuna = getBodyTextureAssets("luna", "immersive", "8k");

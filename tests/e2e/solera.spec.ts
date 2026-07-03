@@ -83,10 +83,15 @@ test("cards open into an immersive scene and return with Escape and browser Back
   await expect(page.getByText("$5.00")).toBeVisible();
   await expect(page.getByText("$0.50")).toBeVisible();
   await expect(page.getByText("$30.00")).toBeVisible();
+  await expect(page.locator('.model-card[data-model="terra"] canvas')).toBeVisible();
 
   await page.getByRole("button", { name: "Enter Terra immersive scene" }).click();
+  await expect(page.locator(".black-hole-transition")).toBeVisible();
+  await expect(page.locator(".black-hole-transition")).toHaveCSS("background-color", "rgb(0, 0, 0)");
+  await expect(page.locator('.model-card[data-model="terra"]')).toHaveAttribute("data-transition-state", "selected");
   await expect(page.getByRole("button", { name: "Return to model grid" })).toBeFocused();
   await expect(page.getByRole("region", { name: "Terra immersive scene" })).toBeVisible();
+  await expect(page.locator(".black-hole-transition")).toBeHidden();
   await expect(page.locator(".scene-view canvas")).toBeVisible();
   await expect(page.getByRole("button", { name: "Pause camera orbit" })).toHaveAttribute("aria-pressed", "false");
   await expect(page.getByRole("button", { name: "Expand Terra scene details, Input $2.50" })).toBeVisible();
@@ -137,6 +142,104 @@ test("cards open into an immersive scene and return with Escape and browser Back
   await expect(page.getByRole("region", { name: "Terra immersive scene" })).toBeVisible();
   await page.getByRole("button", { name: "Expand Terra scene details, Input $2.50" }).click();
   await expect(page.getByText("Clouds and night lights")).toBeVisible();
+});
+
+test("reduced motion opens scenes without the shader tunnel", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "Enter Luna immersive scene" }).click();
+
+  await expect(page.locator(".black-hole-transition")).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Luna immersive scene" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Return to model grid" })).toBeFocused();
+});
+
+test("Solera Live disabled fallback preserves the solo grid", async ({ page }) => {
+  await page.route("**/api/solera-live/config", (route) =>
+    route.fulfill({
+      json: {
+        enabled: false,
+        provider: "mock",
+        supportedRegions: ["eu", "us"],
+        defaultRegion: "eu",
+        room: { targetSize: 8, maxSize: 16, assignmentTtlSeconds: 120 },
+        chat: { maxLength: 240, rateLimitCount: 5, rateLimitWindowSeconds: 10 },
+        tokenTtlSeconds: 900,
+        unavailableReason: "feature_flag_disabled",
+      },
+    }),
+  );
+  await page.goto("/");
+
+  await expect(page.getByRole("button", { name: "Solera Live unavailable" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Enter Sol immersive scene" })).toBeVisible();
+  await page.getByRole("button", { name: "Enter Luna immersive scene" }).click();
+  await expect(page.getByRole("region", { name: "Luna immersive scene" })).toBeVisible();
+});
+
+test("Solera Live opt-in joins a mock room, sends chat, pings, and reports", async ({ page }) => {
+  const config = {
+    enabled: true,
+    provider: "mock",
+    supportedRegions: ["eu", "us"],
+    defaultRegion: "eu",
+    room: { targetSize: 8, maxSize: 16, assignmentTtlSeconds: 120 },
+    chat: { maxLength: 240, rateLimitCount: 5, rateLimitWindowSeconds: 10 },
+    tokenTtlSeconds: 900,
+  };
+  const assignment = {
+    region: "eu",
+    roomId: "solera-eu-001",
+    occupancyEstimate: 1,
+    channels: {
+      presence: "solera-live:eu:solera-eu-001:presence",
+      chat: "solera-live:eu:solera-eu-001:chat",
+      pings: "solera-live:eu:solera-eu-001:pings",
+      occupancy: "solera-live:eu:solera-eu-001:occupancy",
+    },
+    expiresAt: "2026-06-30T12:02:00.000Z",
+  };
+
+  await page.route("**/api/solera-live/config", (route) => route.fulfill({ json: config }));
+  await page.route("**/api/solera-live/rooms/assign", (route) => route.fulfill({ json: assignment }));
+  await page.route("**/api/solera-live/report", (route) => route.fulfill({ json: { ok: true, reportId: "report-1", storedIn: "memory" } }));
+  await page.goto("/");
+
+  await page.getByLabel("Name").fill("Aster");
+  await page.getByLabel("Region").selectOption("eu");
+  await page.getByRole("button", { name: "Join Solera Live" }).click();
+
+  await expect(page.getByText("Live", { exact: true })).toBeVisible();
+  await expect(page.getByText("EU")).toBeVisible();
+  await expect(page.getByText("1/16")).toBeVisible();
+
+  await page.getByRole("button", { name: "Toggle Solera Live chat" }).click();
+  await page.getByLabel("Solera Live message").fill("https://example.com");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByText("Links are not available in public chat.")).toBeVisible();
+
+  await page.getByLabel("Solera Live message").fill("d u m b a s s");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByText("That message is not safe for public chat.")).toBeVisible();
+
+  await page.getByLabel("Solera Live message").fill("Hello Solera");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByText("Hello Solera")).toBeVisible();
+  await page.getByRole("button", { name: "Report" }).click();
+  await expect(page.getByText("Report acknowledged.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Ping Sol" }).click();
+  await expect(page.getByText("Ping from Aster near Sol")).toBeVisible();
+
+  await page.getByRole("button", { name: "Enter Terra immersive scene" }).click();
+  await expect(page.getByRole("region", { name: "Terra immersive scene" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ping Terra" })).toBeEnabled();
+  await page.getByRole("button", { name: "Ping Terra" }).click();
+  await expect(page.getByText("Ping from Aster near Terra")).toBeVisible();
+  await page.getByLabel("Solera Live message").fill("Still live on Terra");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByText("Still live on Terra")).toBeVisible();
 });
 
 test("camera rotation toggle pauses camera orbit without freezing scene motion", async ({ page }) => {

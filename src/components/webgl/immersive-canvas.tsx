@@ -12,6 +12,7 @@ import { canvasDpr } from "@/lib/rendering-profile";
 import { selectedCameraComposition } from "@/lib/scene-composition";
 import { SceneBodies } from "./orbit-guides";
 import { configureRenderer, rendererSettings } from "./renderer-settings";
+import { SceneWarmup } from "./scene-warmup";
 import { Starfield } from "./starfield";
 
 type ImmersiveCanvasProps = Readonly<{
@@ -119,6 +120,7 @@ export default function ImmersiveCanvas({ cameraAutoRotatePaused, debugSettings,
         target={target}
       />
       <SceneBodies debugSettings={debugSettings} selectedModelId={modelId} profile={profile} />
+      <SceneWarmup cacheKey={`${modelId}:${profile.textureQuality}:${profile.sphereSegments}`} />
     </Canvas>
   );
 }

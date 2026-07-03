@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { preload } from "react-dom";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,6 +31,10 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  preload("/textures/solera/2k_sun.jpg", { as: "image", crossOrigin: "anonymous" });
+  preload("/textures/solera/2k_earth_daymap.jpg", { as: "image", crossOrigin: "anonymous" });
+  preload("/textures/solera/2k_moon.jpg", { as: "image", crossOrigin: "anonymous" });
+
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>{children}</body>

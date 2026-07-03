@@ -6,7 +6,7 @@ brand
 
 ## Users
 
-Systema Solera is for a broad tech audience discovering a fictional model family through a memorable launch surface rather than a conventional pricing table. The visitor may be a developer, a founder, a designer, or simply someone curious about AI model positioning. They arrive with low context and should understand the hierarchy quickly: Sol is the flagship, Terra is the balanced everyday model, and Luna is the fast high-volume model.
+Systema Solera is for a broad tech audience discovering the pre-public GPT-5.6 Sol, Terra, and Luna model family through a memorable launch surface rather than a conventional pricing table. The visitor may be a developer, a founder, a designer, or simply someone curious about AI model positioning. They arrive with low context and should understand the hierarchy quickly: Sol is the flagship, Terra is the balanced everyday model, and Luna is the fast high-volume model.
 
 ## Product Purpose
 
