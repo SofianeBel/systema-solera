@@ -1,8 +1,8 @@
 # Systema Solera
 
-Systema Solera is a cinematic Next.js model-launch surface for a fictional Sol, Terra, and Luna model family. The homepage presents the models as live celestial cards, then opens each one into an immersive WebGL scene with orbital controls, pricing, and real astronomical scale references.
+Systema Solera is a cinematic Next.js launch surface for the GPT-5.6 Sol, Terra, and Luna model family ahead of general public availability. The homepage presents the models as live celestial cards, then opens each one into an immersive WebGL scene with orbital controls, pricing, and real astronomical scale references.
 
-Systema Solera is not affiliated with OpenAI.
+This project treats Sol, Terra, and Luna as a pre-public model lineup, not as fictional placeholders or as models that are currently available to the general public. Systema Solera is not affiliated with OpenAI.
 
 ## Stack
 
